@@ -36,7 +36,7 @@ set /p MSG=写一句说明（例如：新增三张生境照）:
 if not defined MSG set "MSG=更新网站内容"
 
 "%GIT%" add .
-"%GIT%" commit -m "%MSG%"
+"%GIT%" commit -q -m "%MSG%"
 if errorlevel 1 (
   echo.
   echo [!] 提交失败，可能确实没有需要提交的改动。

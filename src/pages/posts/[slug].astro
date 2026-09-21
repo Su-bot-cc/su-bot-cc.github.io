@@ -1,0 +1,85 @@
+---
+// 文章详情页：一篇 .md 对应一个页面。你不需要改这个文件。
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Crumb from '../../components/Crumb.astro';
+import { rich, plain } from '../../utils/rich';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+---
+
+<BaseLayout pageTitle={plain(post.data.title)} description={plain(post.data.summary)} active="/academicabin">
+  <Crumb crumb="Home / Academicabin" right={`${fmt(post.data.date)} · ${post.data.tag}`} />
+
+  <article class="container post">
+    <h1 class="post-title" set:html={rich(post.data.title)}></h1>
+    <p class="mono post-meta">{fmt(post.data.date)} · {post.data.tag}</p>
+    <hr class="hairline" />
+    <div class="prose">
+      <Content />
+    </div>
+    <p class="back"><a href="/academicabin">← 回到全部文章</a></p>
+  </article>
+</BaseLayout>
+
+<style>
+  .post { padding-top: 20px; padding-bottom: 96px; }
+  .post-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1.35;
+    margin: 0;
+  }
+  .post-meta {
+    font-size: 12px;
+    color: var(--moss);
+    margin: 14px 0 0;
+  }
+  .post .hairline { margin: 24px 0 40px; }
+
+  /* 正文排版：只作用于 .md 渲染出来的内容 */
+  .prose { max-width: 720px; font-size: 16px; line-height: 1.9; }
+  .prose :global(h2) {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    margin: 44px 0 14px;
+  }
+  .prose :global(p) { margin: 0 0 20px; }
+  .prose :global(strong) { font-weight: 600; }
+  .prose :global(ul), .prose :global(ol) { padding-left: 22px; margin: 0 0 20px; }
+  .prose :global(li) { margin-bottom: 8px; }
+  .prose :global(blockquote) {
+    margin: 24px 0;
+    padding-left: 18px;
+    border-left: 2px solid var(--moss);
+    color: var(--ink-soft);
+  }
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: #ece5d8;
+    padding: 2px 5px;
+  }
+  .prose :global(img) { margin: 28px 0; }
+
+  .back { margin-top: 56px; font-size: 14px; }
+  .back a { border-bottom: 0; }
+
+  @media (max-width: 860px) {
+    .post-title { font-size: 28px; }
+  }
+</style>

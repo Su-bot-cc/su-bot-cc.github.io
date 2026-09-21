@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AboutView from '../components/AboutView.astro';
+import { site } from '../site';
+import { contact, cvSections } from '../data/cv';
+import { plain } from '../utils/rich';
+
+const t = site.about;
+---
+
+<BaseLayout
+  pageTitle={plain(t.title)}
+  description={plain(t.intro)}
+  active="/about"
+  footerNote={t.footerNote}
+  lang="zh-CN"
+>
+  <AboutView
+    crumb="Home / About me"
+    t={t}
+    contact={contact}
+    cvSections={cvSections}
+    switchLabel="EN"
+    switchHref="/en/about"
+    switchHint="本页有英文版"
+  />
+</BaseLayout>

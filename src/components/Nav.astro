@@ -1,0 +1,112 @@
+---
+// 顶部导航。想改导航项，去 src/site.ts 的 nav 数组。
+import { site } from '../site';
+
+interface Props {
+  active?: string;
+  dark?: boolean;
+  overlay?: boolean;   // true = 浮在首屏大图之上（首页用）
+  items?: { label: string; href: string }[];  // 不传就用 site.ts 里的 nav
+}
+const { active = '', dark = false, overlay = false, items = site.nav } = Astro.props;
+---
+
+<header class:list={['nav', { 'is-dark': dark, 'is-overlay': overlay }]}>
+  <div class="container nav-inner">
+    <a href="/" class="wordmark">{site.wordmark}</a>
+    <nav class="links">
+      {
+        items.map((item) => (
+          <a
+            href={item.href}
+            class:list={['link', { active: active === item.href }]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    border-bottom: 1px solid var(--hair);
+  }
+  .nav.is-dark {
+    border-bottom-color: var(--dark-hair);
+  }
+  .nav-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding-top: 28px;
+    padding-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 24px;
+    border-bottom: 0;
+  }
+  .links {
+    display: flex;
+    gap: 36px;
+    flex-wrap: wrap;
+  }
+  .link {
+    font-size: 14px;
+    border-bottom: 0;
+    color: var(--ink-soft);
+    padding-bottom: 2px;
+  }
+  .nav.is-dark .link {
+    color: var(--dark-soft);
+  }
+  .link:hover {
+    color: var(--moss);
+  }
+  .nav.is-dark .link:hover {
+    color: var(--dark-ink);
+  }
+  .link.active {
+    color: var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+  .nav.is-dark .link.active {
+    color: var(--dark-ink);
+    border-bottom-color: var(--dark-ink);
+  }
+  /* 浮在首屏大图上：透明底、浅色字、不加分隔线 */
+  .nav.is-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    border-bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(12, 11, 9, 0.55) 0%,
+      rgba(12, 11, 9, 0) 100%
+    );
+  }
+  .nav.is-overlay .wordmark {
+    color: #f5f1e8;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+  }
+  .nav.is-overlay .link {
+    color: rgba(245, 241, 232, 0.82);
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+  }
+  .nav.is-overlay .link:hover { color: #fff; }
+  .nav.is-overlay .link.active {
+    color: #fff;
+    border-bottom-color: #fff;
+  }
+  @media (max-width: 860px) {
+    .links { gap: 18px; }
+    .link { font-size: 13px; }
+  }
+</style>

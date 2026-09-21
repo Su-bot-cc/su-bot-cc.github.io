@@ -1,0 +1,50 @@
+---
+// 全站外壳：所有页面都套这个。你一般不需要改它。
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../site';
+
+interface Props {
+  pageTitle?: string;      // 浏览器标签上的标题
+  description?: string;    // 搜索结果里的描述
+  dark?: boolean;          // true = 深色底（摄影区用）
+  active?: string;         // 当前所在的区块，用来高亮导航
+  footerNote?: string;     // 页脚左侧那句话，不传就用 site.ts 里的默认
+  heroOverlay?: boolean;   // true = 导航浮在首屏大图之上（首页用）
+  lang?: string;           // 页面语言，英文页传 'en'
+  nav?: { label: string; href: string }[];  // 覆盖导航项（英文页用）
+}
+const {
+  pageTitle,
+  description,
+  dark = false,
+  active = '',
+  footerNote,
+  heroOverlay = false,
+  lang = 'zh-CN',
+  nav,
+} = Astro.props;
+
+const fullTitle = pageTitle ? `${pageTitle} · ${site.wordmark}` : site.title;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description ?? site.description} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description ?? site.description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body class={dark ? 'is-dark' : ''}>
+    <Nav active={active} dark={dark} overlay={heroOverlay} items={nav} />
+    <main>
+      <slot />
+    </main>
+    <Footer dark={dark} note={footerNote} />
+  </body>
+</html>

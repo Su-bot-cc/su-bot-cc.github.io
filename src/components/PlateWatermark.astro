@@ -1,0 +1,49 @@
+---
+// 页面装饰图版：把一张线稿以"纸上水印"的方式垫在内容底下。
+// 用法（在页面里）：
+//   <PlateWatermark src={bg} side="right" top="150px" width="640px" opacity={0.12} />
+// 想调存在感就改 opacity（0.06 更淡，0.2 更明显）；想换边就改 side。
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: ImageMetadata;
+  side?: 'left' | 'right';
+  top?: string;
+  width?: string;
+  opacity?: number;
+}
+const { src, side = 'right', top = '150px', width = '640px', opacity = 0.12 } = Astro.props;
+---
+
+<div
+  class:list={['plate-wm', `is-${side}`]}
+  style={`--wm-top:${top};--wm-w:${width};--wm-o:${opacity};`}
+  aria-hidden="true"
+>
+  <Image src={src} alt="" widths={[600, 1000, 1400]} sizes="(max-width: 860px) 70vw, 42vw" loading="eager" />
+</div>
+
+<style>
+  .plate-wm {
+    position: absolute;
+    top: var(--wm-top);
+    width: var(--wm-w);
+    opacity: var(--wm-o);
+    /* 图的纸底已在生成时提白为纯白，叠在米色页面上只差约 1 个色阶，天然隐形；
+       不用 mix-blend-mode，浏览器行为更一致 */
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+  .plate-wm.is-right { right: calc(-1 * var(--gutter)); }
+  .plate-wm.is-left { left: calc(-1 * var(--gutter)); }
+  .plate-wm :global(img) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  @media (max-width: 860px) {
+    .plate-wm { display: none; } /* 手机上收掉，别跟正文抢地方 */
+  }
+</style>

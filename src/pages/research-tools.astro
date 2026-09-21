@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Crumb from '../components/Crumb.astro';
+import SectionHead from '../components/SectionHead.astro';
+import { site } from '../site';
+import { toolGroups } from '../data/tools';
+import { rich, plain } from '../utils/rich';
+
+const t = site.tools;
+const count = toolGroups.reduce((n, g) => n + g.items.length, 0);
+---
+
+<BaseLayout
+  pageTitle={plain(t.title)}
+  description={plain(t.intro)}
+  active="/research-tools"
+  footerNote={t.footerNote}
+>
+  <div class="page-wrap">
+    <Crumb crumb="Home / Research Tools" right={`${count} BOOKMARKS`} />
+    <SectionHead kicker={t.kicker} title={t.title} intro={t.intro} />
+
+  <div class="container">
+    <div class="cols">
+      {
+        toolGroups.map((g) => (
+          <section class="group reveal">
+            <h2 class="group-title" set:html={rich(g.group)}></h2>
+            <ul class="items">
+              {g.items.map((it) => (
+                <li class="item">
+                  <a class="item-name" href={it.url} target="_blank" rel="noopener noreferrer">
+                    <span set:html={rich(it.name)}></span> ↗
+                  </a>
+                  <p class="item-note" set:html={rich(it.note)}></p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* 显微镜图版水印：已烘焙成半透明墨线（public/bg-research-tools.webp），垫在内容底下 */
+  .page-wrap {
+    position: relative;
+    overflow-x: clip;
+    background-image: url('/bg-research-tools.webp');
+    background-repeat: no-repeat;
+    background-position: right -80px top 150px;
+    background-size: 520px auto;
+  }
+  /* ---------- 分组布局 ----------
+     CSS Grid：一行最多 3 组，第 4 组起自动换行到下一行。
+     加多少个分组都不怕，分组数量决定行数。 */
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* minmax(0)：允许组内文字正常收缩折行 */
+    column-gap: 64px;
+    row-gap: 56px;
+    align-items: start;
+    padding-bottom: 96px;
+  }
+  .group-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 20px;
+    margin: 0 0 18px;
+  }
+  .items { list-style: none; margin: 0; padding: 0; }
+  .item { padding-bottom: 18px; }
+  .item-name {
+    font-size: 15px;
+    font-weight: 500;
+    border-bottom: 0;
+  }
+  .item-note {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  /* 中等宽度：两列；分组多时也不会挤成一细条 */
+  @media (max-width: 1100px) {
+    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; }
+  }
+
+  @media (max-width: 860px) {
+    .page-wrap { background-image: none; }
+    /* 窄屏：全部分组竖排单列 */
+    .cols { grid-template-columns: 1fr; row-gap: 40px; padding-bottom: 64px; }
+  }
+</style>

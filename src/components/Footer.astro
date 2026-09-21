@@ -1,0 +1,45 @@
+---
+// 页脚。左侧那句话可以在页面里单独指定，右侧链接在 src/site.ts 的 footer.links。
+import { site } from '../site';
+import { rich } from '../utils/rich';
+
+interface Props {
+  dark?: boolean;
+  note?: string;
+}
+const { dark = false, note } = Astro.props;
+---
+
+<footer class:list={['footer', { 'is-dark': dark }]}>
+  <div class="container">
+    <hr class="hairline" />
+    <div class="footer-bar">
+      <span class="mono note" set:html={rich(note ?? site.footer.credit)}></span>
+      <span class="links">
+        {
+          site.footer.links.map((l) => (
+            <a href={l.href} class="link" set:html={rich(l.label)}></a>
+          ))
+        }
+      </span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer .hairline { background: var(--hair); }
+  .footer.is-dark .hairline { background: var(--dark-hair); }
+  .note {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .footer.is-dark .note { color: var(--dark-faint); }
+  .links {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .link { font-size: 13px; }
+  .footer.is-dark .link { color: var(--dark-ink); }
+  .footer.is-dark .link:hover { color: var(--dark-soft); }
+</style>

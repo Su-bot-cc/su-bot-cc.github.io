@@ -1,0 +1,373 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Crumb from '../components/Crumb.astro';
+import SectionHead from '../components/SectionHead.astro';
+import { site } from '../site';
+import { hero, galleries, totalPlates } from '../data/photos';
+import { rich, plain } from '../utils/rich';
+import { pagesOf, pagerCss } from '../utils/pager';
+import { img } from '../assets/index';
+import { Image } from 'astro:assets';
+
+const heroImg = img(hero.file);
+const t = site.photography;
+
+/* ---- 分页参数 ----
+   PER_PAGE = 每个画廊一页显示几张缩略图，多出来的自动排到下一页。
+   三个画廊各自独立翻页。整套分页是纯 CSS 的，不加载任何脚本。 */
+const PER_PAGE = 6;
+const seq = (n: number) => Array.from({ length: n }, (_, i) => i + 1);
+const num = (k: number) => String(k).padStart(2, '0');
+---
+
+<BaseLayout
+  pageTitle={plain(t.title)}
+  description={plain(t.intro)}
+  dark={true}
+  active="/photography"
+  footerNote={t.footerNote}
+>
+  <Crumb crumb="Home / Photography" right={`${totalPlates} PLATES`} dark={true} />
+  <SectionHead kicker={t.kicker} title={t.title} intro={t.intro} dark={true} />
+
+  <!-- 主展图 -->
+  <div class="container">
+    <figure class="feature reveal">
+      {heroImg && <Image src={heroImg} alt={plain(hero.alt)} loading="eager" />}
+      <figcaption>
+        <span class="cap-title" set:html={rich(hero.title)}></span>
+        <span class="mono cap-meta" set:html={rich(hero.caption)}></span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- 三个独立画廊，各自独立翻页 -->
+  {
+    galleries.map((g) => {
+      const pages = pagesOf(g.plates.length, PER_PAGE);
+      const radioId = (k: number) => `pg-${g.id}-${k}`;
+      return (
+        <section class="gallery reveal" id={g.id}>
+          <div class="container">
+            <header class="gal-head">
+              <div>
+                <p class="mono gal-kicker" set:html={rich(g.kicker)}></p>
+                <h2 class="gal-title" set:html={rich(g.title)}></h2>
+              </div>
+              <p class="mono gal-count">{String(g.plates.length).padStart(2, '0')} PLATES</p>
+            </header>
+            <p class="gal-intro" set:html={rich(g.intro)}></p>
+            <p class="mono gal-note" set:html={rich(t.note)}></p>
+
+            {/* 分页状态：隐藏的 radio。必须和 .grid / .pager 同级且排在前面，兄弟选择器才生效 */}
+            {seq(pages).map((k) => (
+              <input
+                class="pg-radio"
+                type="radio"
+                name={`pg-${g.id}`}
+                id={radioId(k)}
+                checked={k === 1}
+                aria-label={`${g.title} 第 ${k} 页`}
+              />
+            ))}
+
+            <div class="grid">
+              {g.plates.map((p, i) => {
+                const meta = img(p.file);
+                const popId = `lb-${g.id}-${i + 1}`;
+                return (
+                  <button class="tile" popovertarget={popId} aria-label={`查看大图：${p.title}`}>
+                    {meta ? (
+                      <Image src={meta} alt={plain(p.alt)} widths={[160, 320, 480]} sizes="(max-width: 860px) 32vw, 170px" />
+                    ) : (
+                      <div class="tile-missing mono">缺图：{p.file}</div>
+                    )}
+                    <span class="tile-cap">
+                      <span class="tile-title" set:html={rich(p.title)}></span>
+                      <span class="mono tile-meta" set:html={rich(p.caption)}></span>
+                    </span>
+                    <span class="mono tile-zoom">⤢</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 页码栏：右下角。照片不足一页时不显示 */}
+            {pages > 1 && (
+              <nav class="pager">
+                <span class="pg-steps">
+                  {seq(pages).map((k) => (
+                    <span class="pg-step" data-step={k}>
+                      {k > 1 && (
+                        <label class="pg-arrow" for={radioId(k - 1)} aria-label="上一页">← PREV</label>
+                      )}
+                      {k < pages && (
+                        <label class="pg-arrow" for={radioId(k + 1)} aria-label="下一页">NEXT →</label>
+                      )}
+                    </span>
+                  ))}
+                </span>
+                <span class="pg-nums">
+                  {seq(pages).map((k) => (
+                    <label class="pg-num" for={radioId(k)} data-pg={k} aria-label={`第 ${k} 页`}>
+                      {num(k)}
+                    </label>
+                  ))}
+                </span>
+              </nav>
+            )}
+
+            {/* 大图浮层：原生 popover，Esc / 点空白处关闭。
+                放在网格外面，免得打乱每页 6 张的计数。 */}
+            {g.plates.map((p, i) => {
+              const meta = img(p.file);
+              const popId = `lb-${g.id}-${i + 1}`;
+              return (
+                <div class="lightbox" id={popId} popover="">
+                  <figure class="lb-fig">
+                    {meta ? (
+                      <Image src={meta} alt={plain(p.alt)} widths={[800, 1200, 1600]} sizes="90vw" loading="lazy" />
+                    ) : (
+                      <div class="tile-missing mono">缺图：{p.file}</div>
+                    )}
+                    <figcaption>
+                      <span class="lb-title" set:html={rich(p.title)}></span>
+                      <span class="mono lb-meta" set:html={rich(p.caption)}></span>
+                      {p.note && <span class="lb-note" set:html={rich(p.note)}></span>}
+                    </figcaption>
+                  </figure>
+                  <button class="lb-close mono" popovertarget={popId} popovertargetaction="hide">
+                    CLOSE ✕
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      );
+    })
+  }
+
+  {/* 每个画廊的「第几页显示哪几张」规则：必须全局，选择器要跨到 .grid */}
+  {
+    galleries.map((g) => (
+      <style is:global set:html={pagerCss({
+        scope: `#${g.id}`,
+        id: `pg-${g.id}`,
+        count: g.plates.length,
+        perPage: PER_PAGE,
+        itemSel: '.grid > .tile',
+        display: 'block',
+      })} />
+    ))
+  }
+</BaseLayout>
+
+<style>
+  /* ---------- 主展图 ---------- */
+  .feature { margin: 0; }
+  .feature :global(img) {
+    width: 100%;
+    height: 520px;
+    object-fit: cover;
+  }
+  .feature figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 0 40px;
+  }
+  .cap-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--dark-ink);
+  }
+  .cap-meta { font-size: 12px; color: var(--dark-faint); }
+
+  /* ---------- 画廊 ---------- */
+  .gallery { padding: 40px 0 72px; }
+  .gal-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    padding-top: 36px;
+    border-top: 1px solid var(--dark-hair);
+  }
+  .gal-kicker {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #8fae98;
+  }
+  .gal-title {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1.2;
+    margin: 10px 0 0;
+    color: var(--dark-ink);
+  }
+  .gal-count {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--dark-faint);
+    white-space: nowrap;
+  }
+  .gal-intro {
+    margin: 14px 0 0;
+    max-width: 720px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--dark-soft);
+  }
+  .gal-note {
+    margin: 10px 0 28px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: #6f6a60;
+  }
+
+  /* ---------- 缩略图网格 ---------- */
+  .grid {
+    display: grid;
+    /* 1:1 小方格：格子越小，一行排得越多。想让缩略图更大就把 150px 调大 */
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 22px 16px;
+  }
+  .tile {
+    position: relative;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    color: inherit;
+    cursor: zoom-in;
+  }
+  .tile :global(img) {
+    width: 100%;
+    height: auto; /* 必须有：否则图片标签自带的 width/height 属性会把高度顶成原图高度 */
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    transition: transform 0.5s ease, filter 0.4s ease;
+  }
+  .tile:hover :global(img) { transform: scale(1.03); filter: brightness(1.08); }
+  .tile-missing {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--dark-faint);
+    background: #1d1a16;
+  }
+  .tile-cap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 8px;
+  }
+  .tile-title {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--dark-ink);
+  }
+  .tile-meta {
+    font-size: 10px;
+    line-height: 1.45;
+    color: var(--dark-faint);
+    /* 小图下方只留两行图注，多出来的省略，避免长短不齐 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tile-zoom {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 12px;
+    color: var(--dark-ink);
+    background: rgba(20, 18, 15, 0.55);
+    padding: 2px 6px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .tile:hover .tile-zoom,
+  .tile:focus-visible .tile-zoom { opacity: 1; }
+
+  /* ---------- 分页器配色：深色底用浅字 ---------- */
+  .pager {
+    --pg-off: var(--dark-faint);
+    --pg-on: var(--dark-ink);
+    --pg-line: var(--dark-hair);
+  }
+
+  /* ---------- 大图浮层（原生 popover：Esc / 点空白处自动关闭） ---------- */
+  .lightbox {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--dark-ink);
+    max-width: 92vw;
+    max-height: 92vh;
+    overflow: visible;
+  }
+  .lightbox::backdrop { background: rgba(10, 9, 8, 0.94); }
+  .lb-fig { margin: 0; }
+  .lb-fig :global(img) {
+    width: auto;
+    height: auto;
+    max-width: min(1200px, 88vw);
+    max-height: 74vh;
+    object-fit: contain;
+    margin: 0 auto;
+  }
+  .lb-fig figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 14px;
+    max-width: min(1200px, 88vw);
+  }
+  .lb-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+  }
+  .lb-meta { font-size: 12px; color: var(--dark-faint); }
+  .lb-note {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--dark-soft);
+    max-width: 62ch;
+    padding-top: 2px;
+  }
+  .lb-close {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    border: 1px solid var(--dark-hair);
+    background: transparent;
+    color: var(--dark-soft);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .lb-close:hover { color: var(--dark-ink); border-color: var(--dark-soft); }
+
+  @media (max-width: 860px) {
+    .feature :global(img) { height: 300px; }
+    .gal-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .gal-title { font-size: 26px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 16px 10px; }
+    .tile-title { font-size: 11px; }
+    .tile-meta { font-size: 9.5px; -webkit-line-clamp: 3; }
+    .lb-fig :global(img) { max-height: 62vh; }
+    .lb-close { top: 12px; right: 12px; }
+  }
+</style>

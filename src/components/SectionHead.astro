@@ -1,0 +1,40 @@
+---
+// 区块大标题区：小标签 + 大标题 + 一句说明。四个区块共用。
+// 文案经 rich() 渲染：支持 \n 换行、*斜体*、**粗体**。
+import { rich } from '../utils/rich';
+interface Props {
+  kicker: string;
+  title: string;
+  intro?: string;
+  dark?: boolean;
+}
+const { kicker, title, intro = '', dark = false } = Astro.props;
+---
+
+<section class:list={['head', { 'is-dark': dark }]}>
+  <div class="container inner">
+    <p class="kicker" set:html={rich(kicker)}></p>
+    <h1 class="page-title" set:html={rich(title)}></h1>
+    {intro && <p class="intro" set:html={rich(intro)}></p>}
+  </div>
+</section>
+
+<style>
+  .inner {
+    padding-top: 56px;
+    padding-bottom: 44px;
+  }
+  .head.is-dark .kicker { color: #8fae98; }
+  .head.is-dark .page-title { color: var(--dark-ink); }
+  .intro {
+    margin: 18px 0 0;
+    max-width: 680px;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+  }
+  .head.is-dark .intro { color: var(--dark-soft); }
+  @media (max-width: 860px) {
+    .inner { padding-top: 36px; padding-bottom: 28px; }
+  }
+</style>

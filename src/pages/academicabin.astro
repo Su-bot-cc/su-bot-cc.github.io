@@ -1,0 +1,161 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Crumb from '../components/Crumb.astro';
+import SectionHead from '../components/SectionHead.astro';
+import { getCollection } from 'astro:content';
+import { site } from '../site';
+import { rich, plain } from '../utils/rich';
+import { pagesOf, pagerCss } from '../utils/pager';
+
+const t = site.academicabin;
+
+// 取出所有非草稿文章，按日期从新到旧排序
+const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/* ---- 分页参数 ----
+   PER_PAGE = 列表一页显示几篇文章，多出来的排到下一页。
+   和摄影页一样是纯 CSS 翻页，不加载任何脚本。 */
+const PER_PAGE = 10;
+const pages = pagesOf(posts.length, PER_PAGE);
+const seq = (n: number) => Array.from({ length: n }, (_, i) => i + 1);
+const num = (k: number) => String(k).padStart(2, '0');
+const radioId = (k: number) => `pg-ab-${k}`;
+---
+
+<BaseLayout
+  pageTitle={plain(t.title)}
+  description={plain(t.intro)}
+  active="/academicabin"
+  footerNote={t.footerNote}
+>
+  <div class="page-wrap">
+    <Crumb crumb="Home / Academicabin" right={`${posts.length} ENTRIES`} />
+    <SectionHead kicker={t.kicker} title={t.title} intro={t.intro} />
+
+  <div class="container">
+    {/* 分页状态：必须和 .list / .pager 同级且排在前面 */}
+    {seq(pages).map((k) => (
+      <input
+        class="pg-radio"
+        type="radio"
+        name="pg-ab"
+        id={radioId(k)}
+        checked={k === 1}
+        aria-label={`文章列表第 ${k} 页`}
+      />
+    ))}
+
+    <div class="list">
+      {
+        posts.length === 0 ? (
+          <p class="empty" set:html={rich(t.emptyText)}></p>
+        ) : (
+          posts.map((p) => (
+            <article class="entry reveal">
+              <div class="entry-left">
+                <span class="mono meta">{fmt(p.data.date)} · {p.data.tag}</span>
+              </div>
+              <div class="entry-right">
+                <h2 class="entry-title">
+                  <a href={`/posts/${p.id}`} set:html={rich(p.data.title)}></a>
+                </h2>
+                <p class="entry-summary" set:html={rich(p.data.summary)}></p>
+              </div>
+              <hr class="hairline" />
+            </article>
+          ))
+        )
+      }
+    </div>
+
+    {/* 页码栏：右下角。文章不足一页时不显示 */}
+    {pages > 1 && (
+      <nav class="pager">
+        <span class="pg-steps">
+          {seq(pages).map((k) => (
+            <span class="pg-step" data-step={k}>
+              {k > 1 && (
+                <label class="pg-arrow" for={radioId(k - 1)} aria-label="上一页">← PREV</label>
+              )}
+              {k < pages && (
+                <label class="pg-arrow" for={radioId(k + 1)} aria-label="下一页">NEXT →</label>
+              )}
+            </span>
+          ))}
+        </span>
+        <span class="pg-nums">
+          {seq(pages).map((k) => (
+            <label class="pg-num" for={radioId(k)} data-pg={k} aria-label={`第 ${k} 页`}>
+              {num(k)}
+            </label>
+          ))}
+        </span>
+      </nav>
+    )}
+  </div>
+
+  {/* 第几页显示哪几篇：必须全局，选择器要跨到 .list */}
+  <style is:global set:html={pagerCss({
+    scope: '.page-wrap',
+    id: 'pg-ab',
+    count: posts.length,
+    perPage: PER_PAGE,
+    itemSel: '.list > .entry',
+    display: 'grid',
+    tailSel: '.hairline',
+  })} />
+  </div>
+</BaseLayout>
+
+<style>
+  /* 石斛兰图版水印：已烘焙成半透明墨线（public/bg-academicabin.webp），垫在内容底下 */
+  .page-wrap {
+    position: relative;
+    overflow-x: clip;
+    background-image: url('/bg-academicabin.webp');
+    background-repeat: no-repeat;
+    background-position: right -80px top 150px;
+    background-size: 640px auto;
+  }
+  .list { padding-bottom: 72px; }
+  .entry {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 40px;
+    padding: 30px 0;
+    position: relative;
+  }
+  .entry .hairline {
+    grid-column: 1 / -1;
+    margin-top: 30px;
+  }
+  .entry:first-child { padding-top: 0; }
+  .entry:last-child .hairline { display: none; }
+  .meta { font-size: 12px; color: var(--moss); }
+  .entry-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.45;
+  }
+  .entry-title a { border-bottom: 0; }
+  .entry-title a:hover { color: var(--moss); }
+  .entry-summary {
+    margin: 8px 0 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  .empty { color: var(--ink-soft); padding: 20px 0 40px; }
+  @media (max-width: 860px) {
+    .page-wrap { background-image: none; }
+    .entry { grid-template-columns: 1fr; gap: 10px; }
+    .entry-title { font-size: 19px; }
+  }
+</style>

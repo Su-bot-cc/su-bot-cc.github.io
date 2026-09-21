@@ -1,0 +1,323 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../site';
+import { sections } from '../data/sections';
+import { img } from '../assets/index';
+import { rich, plain } from '../utils/rich';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+const heroImg = img(site.home.heroImage);
+
+/* ---- 首屏轮播参数 ----
+   SLIDE_SEC = 每张停留的秒数；FADE_SEC = 淡入淡出的秒数。
+   想让切换快一点/慢一点，改这两个数字就行，不用动 CSS。 */
+const SLIDE_SEC = 6;
+const FADE_SEC = 0.8;
+
+/* 把 site.ts 里的文件名换成真实图片；找不到文件的会被自动跳过。
+   如果 heroSlides 一张都没配上，就退回单张 heroImage。 */
+const slides: { file: string; meta: ImageMetadata }[] = [];
+for (const file of site.home.heroSlides) {
+  const meta = img(file);
+  if (meta) slides.push({ file, meta });
+}
+if (slides.length === 0 && heroImg) {
+  slides.push({ file: site.home.heroImage, meta: heroImg });
+}
+
+const totalSec = slides.length * SLIDE_SEC;
+/* 关键帧的百分比要按图片张数算，否则加减图之后节奏会错乱 —— 这里动态生成 */
+const pct = (sec: number) => +((sec / totalSec) * 100).toFixed(4);
+const heroKeyframes = slides.length > 1
+  ? `@keyframes hero-fade {
+  0% { opacity: 0; }
+  ${pct(FADE_SEC)}% { opacity: 1; }
+  ${pct(SLIDE_SEC - FADE_SEC)}% { opacity: 1; }
+  ${pct(SLIDE_SEC + FADE_SEC)}% { opacity: 0; }
+  100% { opacity: 0; }
+}`
+  : '';
+---
+
+<BaseLayout active="/" description={plain(site.description)} heroOverlay={slides.length > 0}>
+
+  <!-- 首屏：整屏大图铺满视口，标题压在图上；多张图轮流淡入淡出 -->
+  <section
+    class:list={[
+      'hero',
+      { 'no-img': slides.length === 0, slideshow: slides.length > 1 },
+    ]}
+  >
+    {slides.map((s, i) => (
+      <Image
+        class:list={['hero-slide', { 'is-first': i === 0 }]}
+        src={s.meta}
+        alt={i === 0 ? site.home.heroAlt : ''}
+        loading="eager"
+        style={`animation-duration:${totalSec}s;animation-delay:${i * SLIDE_SEC - FADE_SEC}s`}
+      />
+    ))}
+    {slides.length > 0 && <div class="hero-scrim"></div>}
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <p class="kicker">{site.home.kicker}</p>
+        <h1 class="hero-title" set:html={rich(site.home.title)}></h1>
+        <p class="hero-intro" set:html={rich(site.home.intro)}></p>
+        <a class="cta" href={site.home.ctaHref}>{site.home.ctaLabel} →</a>
+      </div>
+    </div>
+  </section>
+  {heroKeyframes && <style is:inline set:html={heroKeyframes}></style>}
+
+  <hr class="hairline" />
+
+  <!-- 导览：四个区块，宽窄交替 -->
+  <section class="guide">
+    <div class="container guide-inner">
+      <div class="guide-head">
+        <div>
+          <p class="kicker">{site.home.guideKicker}</p>
+          <h2 class="guide-title" set:html={rich(site.home.guideTitle)}></h2>
+        </div>
+        <p class="guide-intro" set:html={rich(site.home.guideIntro)}></p>
+      </div>
+
+      <div class="tiles-row row-a">
+        {sections.slice(0, 2).map((s) => (
+          <article class="tile">
+            {s.image ? (
+              img(s.image) ? (
+                <Image class="tile-img" src={img(s.image)!} alt={s.alt} />
+              ) : (
+                <div class="tile-panel"><span class="mono">缺图：{s.image}</span></div>
+              )
+            ) : (
+              <div class="tile-panel">
+                <span class="mono panel-label">BOOKMARKS / 常用</span>
+                {s.panel.map((p) => <span class="mono panel-item">{p}</span>)}
+              </div>
+            )}
+            <div class="tile-meta">
+              <p class="mono tile-num">{s.num} / {s.label}</p>
+              <h3 class="tile-title" set:html={rich(s.title)}></h3>
+              <p class="tile-desc" set:html={rich(s.desc)}></p>
+              <a class="tile-link" href={s.href}>进入区块 →</a>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div class="tiles-row row-b">
+        {sections.slice(2, 4).map((s) => (
+          <article class="tile">
+            {s.image ? (
+              img(s.image) ? (
+                <Image class="tile-img" src={img(s.image)!} alt={s.alt} />
+              ) : (
+                <div class="tile-panel"><span class="mono">缺图：{s.image}</span></div>
+              )
+            ) : (
+              <div class="tile-panel">
+                <span class="mono panel-label">BOOKMARKS / 常用</span>
+                {s.panel.map((p) => <span class="mono panel-item">{p}</span>)}
+              </div>
+            )}
+            <div class="tile-meta">
+              <p class="mono tile-num">{s.num} / {s.label}</p>
+              <h3 class="tile-title" set:html={rich(s.title)}></h3>
+              <p class="tile-desc" set:html={rich(s.desc)}></p>
+              <a class="tile-link" href={s.href}>进入区块 →</a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* ---------- 首屏：整屏大图 ---------- */
+  .hero {
+    position: relative;
+    /* 铺满整个视口高度；svh 会避开手机地址栏的高度变化 */
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    background: var(--dark);
+  }
+  /* 图作为背景层铺满，cover 保证不留白（多余的边裁掉） */
+  .hero :global(.hero-slide) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+  }
+  /* 只有一张图（或浏览器不支持动画）时，第一张直接显示 */
+  .hero :global(.hero-slide.is-first) { opacity: 1; }
+  /* 轮播：每张图跑同一条动画，靠 animation-delay 错开（时长与延迟由模板注入） */
+  .hero.slideshow :global(.hero-slide) {
+    animation-name: hero-fade;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+  }
+  /* 系统里开了"减弱动态效果"的人：不轮播，只显示第一张 */
+  @media (prefers-reduced-motion: reduce) {
+    .hero.slideshow :global(.hero-slide) { animation: none; }
+    .hero.slideshow :global(.hero-slide:not(.is-first)) { display: none; }
+  }
+  /* 压暗层：让浅色标题在任何照片上都读得清 */
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(12, 11, 9, 0.88) 0%,
+      rgba(12, 11, 9, 0.6) 34%,
+      rgba(12, 11, 9, 0.22) 68%,
+      rgba(12, 11, 9, 0.42) 100%
+    );
+  }
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding-top: 140px;
+    padding-bottom: 88px;
+  }
+  .hero-text { max-width: 760px; }
+  .hero .kicker { color: #a8c6b2; }
+  /* 标题里的换行已由 rich() 转成 <br>，pre-line 只是兜底 */
+  .hero-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 54px;
+    line-height: 1.28;
+    margin: 18px 0 0;
+    white-space: pre-line;
+    color: #fff;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+  }
+  .hero-intro {
+    margin: 24px 0 0;
+    font-size: 16px;
+    line-height: 1.85;
+    color: rgba(245, 241, 232, 0.86);
+    max-width: 620px;
+    text-shadow: 0 1px 16px rgba(0, 0, 0, 0.4);
+  }
+  .cta {
+    display: inline-block;
+    margin-top: 26px;
+    font-size: 15px;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+  }
+  .cta:hover { border-bottom-color: #fff; color: #fff; }
+  /* 万一图丢了，退回浅底，不至于整屏发黑 */
+  .hero.no-img {
+    background: var(--paper);
+    min-height: 52vh;
+  }
+  .hero.no-img .hero-title { color: var(--ink); text-shadow: none; }
+  .hero.no-img .hero-intro { color: var(--ink-soft); text-shadow: none; }
+  .hero.no-img .kicker { color: var(--moss); }
+  .hero.no-img .cta { color: var(--ink); border-bottom-color: var(--ink); }
+
+  /* ---------- 导览 ---------- */
+  .guide-inner { padding-top: 88px; padding-bottom: 96px; }
+  .guide-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 60px;
+    margin-bottom: 40px;
+  }
+  .guide-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.3;
+    margin: 14px 0 0;
+  }
+  .guide-intro {
+    flex: 0 1 600px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ink-soft);
+  }
+
+  .tiles-row {
+    display: grid;
+    gap: 17px;
+  }
+  .row-a { grid-template-columns: 2fr 1fr; }
+  .row-b { grid-template-columns: 1fr 2fr; margin-top: 17px; }
+
+  .tile {
+    background: #fff;
+    border: 1px solid var(--hair);
+    display: flex;
+    flex-direction: column;
+  }
+  .tile-img {
+    width: 100%;
+    height: 296px;
+    object-fit: cover;
+  }
+  .tile-panel {
+    height: 296px;
+    background: var(--moss);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .panel-label { font-size: 12px; color: #9fb6a6; }
+  .panel-item { font-size: 13px; color: #e4ebe5; }
+
+  .tile-meta {
+    padding: 28px 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tile-num { font-size: 12px; color: var(--moss); margin: 0; }
+  .tile-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0;
+  }
+  .tile-desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  .tile-link { margin-top: 4px; font-size: 13px; }
+
+  @media (max-width: 860px) {
+    .hero {
+      min-height: 92vh;
+      min-height: 92svh;
+    }
+    .hero-inner {
+      padding-top: 120px;
+      padding-bottom: 56px;
+    }
+    .hero-title { font-size: 32px; }
+    .hero-intro { font-size: 15px; }
+    .guide-head { flex-direction: column; gap: 20px; }
+    .row-a, .row-b { grid-template-columns: 1fr; }
+    .tile-img, .tile-panel { height: 220px; }
+  }
+</style>

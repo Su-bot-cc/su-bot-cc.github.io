@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AboutView from '../../components/AboutView.astro';
+import { enAbout, enContact, enCvSections, enNav } from '../../data/en';
+import { plain } from '../../utils/rich';
+
+const t = enAbout;
+---
+
+<BaseLayout
+  pageTitle={plain(t.title)}
+  description="Evolutionary biology researcher working on chordate Hox gene evolution, goby phylogenomics and scientific photography."
+  active="/en/about"
+  footerNote={t.footerNote}
+  lang="en"
+  nav={enNav}
+>
+  <AboutView
+    crumb="Home / About me"
+    t={t}
+    contact={enContact}
+    cvSections={enCvSections}
+    switchLabel="中文"
+    switchHref="/about"
+    missingLabel="Image missing: "
+  />
+</BaseLayout>

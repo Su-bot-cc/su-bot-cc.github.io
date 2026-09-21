@@ -1,0 +1,174 @@
+---
+/* About me 页面的内容主体。
+   中文页（/about）和英文页（/en/about）共用这一个组件，
+   只是传入不同的文案与数据——版式只有一份，改样式改这里即可。 */
+import Crumb from './Crumb.astro';
+import SectionHead from './SectionHead.astro';
+import { img } from '../assets/index';
+import { rich, plain } from '../utils/rich';
+import { Image } from 'astro:assets';
+
+type Contact = { label: string; value: string; href: string };
+type CvItem = { period: string; title: string; note: string };
+type CvSection = { title: string; items: CvItem[] };
+
+interface Props {
+  crumb: string;                 // 面包屑文字，比如 'Home / About me'
+  t: {                           // 这一页的文案
+    kicker: string;
+    title: string;
+    intro: string;
+    cvLinkLabel: string;
+    cvLinkHref: string;
+    portrait: string;
+    portraitAlt: string;
+  };
+  contact: Contact[];
+  cvSections: CvSection[];
+  switchLabel: string;           // 语言切换链接的文字，比如 'EN'
+  switchHref: string;            // 语言切换链接的地址
+  switchHint?: string;           // 切换链接前的小字说明
+  missingLabel?: string;         // 图片找不到时的提示文字
+}
+const {
+  crumb,
+  t,
+  contact,
+  cvSections,
+  switchLabel,
+  switchHref,
+  switchHint,
+  missingLabel = '缺图：',
+} = Astro.props;
+
+const portrait = img(t.portrait);
+---
+
+<Crumb crumb={crumb} right={t.cvLinkLabel} />
+
+<div class="container">
+  <div class="switch-bar">
+    {switchHint && <span class="switch-hint mono" set:html={rich(switchHint)}></span>}
+    <a class="switch mono" href={switchHref}>{switchLabel} →</a>
+  </div>
+</div>
+
+<SectionHead kicker={t.kicker} title={t.title} intro={t.intro} />
+
+<div class="container">
+  <div class="body stack-md">
+    <!-- 左栏：肖像 + 联系方式 -->
+    <aside class="left">
+      {portrait ? (
+        <Image class="portrait" src={portrait} alt={plain(t.portraitAlt)} widths={[340, 680]} sizes="340px" />
+      ) : (
+        <div class="portrait portrait-missing mono">{missingLabel}{t.portrait}</div>
+      )}
+      <dl class="contact">
+        {
+          contact.map((c) => (
+            <div class="contact-row">
+              <dt class="mono" set:html={rich(c.label)}></dt>
+              <dd class="mono">
+                {c.href ? <a href={c.href} set:html={rich(c.value)}></a> : <span set:html={rich(c.value)}></span>}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </aside>
+
+    <!-- 右栏：经历 -->
+    <div class="right">
+      {
+        cvSections.map((sec) => (
+          <section class="cv-group reveal">
+            <h2 class="cv-title" set:html={rich(sec.title)}></h2>
+            {sec.items.map((it) => (
+              <div class="cv-item">
+                <span class="mono period" set:html={rich(it.period)}></span>
+                <p class="cv-item-title" set:html={rich(it.title)}></p>
+                <p class="cv-item-note" set:html={rich(it.note)}></p>
+              </div>
+            ))}
+          </section>
+        ))
+      }
+      <a class="cv-download" href={t.cvLinkHref}>{t.cvLinkLabel} ↓</a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .switch-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 12px;
+    padding-top: 18px;
+  }
+  .switch-hint {
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  .switch {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--moss);
+    border-bottom: 1px solid transparent;
+  }
+  .switch:hover { border-bottom-color: var(--moss); }
+
+  .body {
+    display: flex;
+    gap: 64px;
+    align-items: flex-start;
+    padding-bottom: 96px;
+  }
+  .left { flex: 0 0 340px; }
+  .portrait {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+  }
+  .portrait-missing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ece5d8;
+    color: var(--ink-faint);
+    font-size: 12px;
+  }
+  .contact { margin: 28px 0 0; }
+  .contact-row { margin-bottom: 12px; }
+  .contact-row dt { font-size: 11px; color: var(--ink-faint); }
+  .contact-row dd { margin: 2px 0 0; font-size: 13px; }
+
+  .right { flex: 1 1 0; }
+  .cv-group { margin-bottom: 52px; }
+  .cv-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 20px;
+    margin: 0 0 22px;
+  }
+  .cv-item { margin-bottom: 22px; }
+  .period { font-size: 12px; color: var(--moss); }
+  .cv-item-title {
+    margin: 5px 0 0;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .cv-item-note {
+    margin: 5px 0 0;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--ink-soft);
+  }
+  .cv-download { font-size: 14px; }
+
+  @media (max-width: 860px) {
+    .left { flex: 1 1 auto; }
+    .portrait { height: 320px; }
+  }
+</style>

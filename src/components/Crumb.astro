@@ -1,0 +1,38 @@
+---
+// 子页面顶部那一行：左边「Home / 当前区块」，右边一句计数或说明。
+import { rich } from '../utils/rich';
+interface Props {
+  crumb: string;   // 例如 "Home / Photography"
+  right?: string;  // 例如 "128 PLATES"，不填就不显示
+  dark?: boolean;
+  backHref?: string;
+}
+const { crumb, right = '', dark = false, backHref = '/' } = Astro.props;
+---
+
+<div class:list={['crumb', { 'is-dark': dark }]}>
+  <div class="container crumb-inner">
+    <span class="mono left" set:html={rich(crumb)}></span>
+    {right && <span class="mono right" set:html={rich(right)}></span>}
+  </div>
+</div>
+
+<style>
+  .crumb {
+    border-bottom: 1px solid var(--hair);
+  }
+  .crumb.is-dark { border-bottom-color: var(--dark-hair); }
+  .crumb-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .left { font-size: 13px; color: var(--ink-soft); }
+  .crumb.is-dark .left { color: var(--dark-soft); }
+  .right { font-size: 13px; color: var(--moss); }
+  .crumb.is-dark .right { color: #8fae98; }
+</style>

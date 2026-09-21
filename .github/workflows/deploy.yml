@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+# 每次推送到 main 分支，自动构建并发布到 GitHub Pages。
+# 首次使用前需要在仓库 Settings → Pages → Build and deployment 里把 Source 改成
+# "GitHub Actions"，否则这里构建好的产物不会被发布。
+
+on:
+  push:
+    branches: [main]
+  # 允许在 GitHub 网页上手动点一次「Run workflow」重新部署
+  workflow_dispatch:
+
+# GitHub Pages 部署需要的最小权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同时跑多次部署时排队，不互相打断
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Node 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建站点
+        run: npm run build
+
+      - name: 上传构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

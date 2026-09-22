@@ -65,6 +65,13 @@ export const galleries: Gallery[] = [
         note: '心肌细胞膜被荧光蛋白eGFP标记',
         alt: '共聚焦',
       },
+                  {
+        file: 'ancientbrain.png',
+        title: 'Innervation \n· *Branchiostoma floridae* \n文昌鱼的脑泡和周边神经',
+        caption: '文昌鱼',
+        note: 'actubulin dyed',
+        alt: '共聚焦',
+      },
       {
         file: 'micro/prism.png',
         title: 'Prism \n· *strongylocentrotus intermedius* \n马粪海胆的prism幼体',
@@ -72,6 +79,7 @@ export const galleries: Gallery[] = [
         note: '细胞膜用DAPI染色',
         alt: '共聚焦',
       },
+
     ],
   },
 

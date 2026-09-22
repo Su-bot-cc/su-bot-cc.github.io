@@ -10,7 +10,7 @@
 export const contact = [
   // href 写成 mailto:邮箱 就能点击直接发信；写空字符串 '' 就不做成链接
   { label: '邮箱', value: 'liush@stu.xmu.edu.cn', href: 'mailto:liush@stu.xmu.edu.cn' },
-  { label: 'ORCID', value: '0000-0000-0000-0000', href: 'https://orcid.org/0000-0000-0000-0000' },
+  { label: 'ORCID', value: '0009-0001-1676-8263', href: 'https://orcid.org/0009-0001-1676-8263' },
   { label: '语言', value: '中文 / English', href: '' },
   { label: '时区', value: 'GMT+8 · 远程协作', href: '' },
 ];
@@ -31,7 +31,7 @@ export const cvSections = [
       },
       {
         period: '2016 — 2020',
-        title: '学士 · 鱼类学',
+        title: '学士 · 水产养殖学/鱼类学',
         note: '野外采集与分类学训练，系统发育分析。',
       },
     ],

@@ -25,3 +25,9 @@ Thumbs.db
 tmp-*.mjs
 tmp-*.py
 tmp-*.ps1
+tmp-*.cjs
+tmp-*.txt
+tmp-build.log
+
+# 压缩工具的原始图备份（体积很大，不入库；换电脑时重新导出即可）
+_原始图备份/

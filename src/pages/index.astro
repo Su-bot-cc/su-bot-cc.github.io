@@ -49,12 +49,19 @@ const heroKeyframes = slides.length > 1
       { 'no-img': slides.length === 0, slideshow: slides.length > 1 },
     ]}
   >
+    {/* 首屏轮播只生成 1280 / 1920 / 2560 三档宽度，由浏览器按屏幕挑一张下载。
+        不限制的话 Astro 会原样输出原图（有的扫描图宽达上万像素），
+        体积和解码开销都会暴涨，首屏切换就会卡帧。
+        第一张立即加载，其余等浏览器空闲再取。 */}
     {slides.map((s, i) => (
       <Image
         class:list={['hero-slide', { 'is-first': i === 0 }]}
         src={s.meta}
         alt={i === 0 ? site.home.heroAlt : ''}
-        loading="eager"
+        widths={[1280, 1920, 2560]}
+        sizes="100vw"
+        loading={i === 0 ? 'eager' : 'lazy'}
+        decoding="async"
         style={`animation-duration:${totalSec}s;animation-delay:${i * SLIDE_SEC - FADE_SEC}s`}
       />
     ))}

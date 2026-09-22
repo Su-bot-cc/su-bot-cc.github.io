@@ -33,7 +33,13 @@ const num = (k: number) => String(k).padStart(2, '0');
   <!-- 主展图 -->
   <div class="container">
     <figure class="feature reveal">
-      {heroImg && <Image src={heroImg} alt={plain(hero.alt)} loading="eager" />}
+      {heroImg && <Image
+        src={heroImg}
+        alt={plain(hero.alt)}
+        widths={[800, 1200, 1600]}
+        sizes="(max-width: 860px) 100vw, 1100px"
+        loading="eager"
+      />}
       <figcaption>
         <span class="cap-title" set:html={rich(hero.title)}></span>
         <span class="mono cap-meta" set:html={rich(hero.caption)}></span>

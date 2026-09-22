@@ -52,7 +52,6 @@ export const site = {
       
       'heart.gif',
       'wedidit.gif',
-      'seaurchin.png',
       'amphioxus.jpg',
       'leigongma.jpg',
       'qusou.jpg',

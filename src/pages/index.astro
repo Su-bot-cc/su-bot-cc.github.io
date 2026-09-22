@@ -26,6 +26,12 @@ if (slides.length === 0 && heroImg) {
   slides.push({ file: site.home.heroImage, meta: heroImg });
 }
 
+/* 动图（.gif）和静态照片分开对待：
+   动图每帧都要占体积，128 帧的图生成多档等于把体积翻几倍，
+   所以只出一档、并且限制宽度 —— 实测这样能比默认输出省一半以上。
+   静态照片维持多档，让浏览器按屏幕挑。 */
+const isAnim = (file: string) => /\.gif$/i.test(file);
+
 const totalSec = slides.length * SLIDE_SEC;
 /* 关键帧的百分比要按图片张数算，否则加减图之后节奏会错乱 —— 这里动态生成 */
 const pct = (sec: number) => +((sec / totalSec) * 100).toFixed(4);
@@ -49,16 +55,18 @@ const heroKeyframes = slides.length > 1
       { 'no-img': slides.length === 0, slideshow: slides.length > 1 },
     ]}
   >
-    {/* 首屏轮播只生成 1280 / 1920 / 2560 三档宽度，由浏览器按屏幕挑一张下载。
+    {/* 静态照片只生成 1280 / 1920 / 2560 三档，由浏览器按屏幕挑一张下载。
         不限制的话 Astro 会原样输出原图（有的扫描图宽达上万像素），
         体积和解码开销都会暴涨，首屏切换就会卡帧。
+        动图只出 1000 宽一档、质量 62 —— 见上面的说明。
         第一张立即加载，其余等浏览器空闲再取。 */}
     {slides.map((s, i) => (
       <Image
         class:list={['hero-slide', { 'is-first': i === 0 }]}
         src={s.meta}
         alt={i === 0 ? site.home.heroAlt : ''}
-        widths={[1280, 1920, 2560]}
+        widths={isAnim(s.file) ? [1000] : [1280, 1920, 2560]}
+        quality={isAnim(s.file) ? 62 : undefined}
         sizes="100vw"
         loading={i === 0 ? 'eager' : 'lazy'}
         decoding="async"

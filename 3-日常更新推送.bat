@@ -20,7 +20,21 @@ if errorlevel 1 (
   )
 )
 
-echo 本地状态：
+echo [1/4] 先把 GitHub 上的最新内容同步到本地
+echo      （在网页上改过文件时，这一步会把那些改动拉回来）
+"%GIT%" pull --rebase --autostash
+if errorlevel 1 (
+  echo.
+  echo [!] 同步失败。常见原因：
+  echo   1. 网络不通 —— 换个时间重新双击本文件
+  echo   2. 你在 GitHub 网页上改的文件，和本地改动撞在同一处 —— 需要手动处理冲突
+  echo.
+  pause
+  exit /b 1
+)
+
+echo.
+echo [2/4] 本地状态：
 "%GIT%" status -sb
 echo.
 
@@ -28,7 +42,7 @@ echo.
 findstr /r "." "%TEMP%\su-site-status.txt" >nul
 if errorlevel 1 goto PUSH
 
-echo 发现改动，写一句说明再提交。
+echo [3/4] 发现改动，写一句说明再提交。
 set /p MSG=说明（例如：新增三张生境照）:
 if not defined MSG set "MSG=更新网站内容"
 
@@ -41,7 +55,7 @@ if errorlevel 1 (
 
 :PUSH
 echo.
-echo 正在推送到 GitHub...
+echo [4/4] 正在推送到 GitHub...
 "%GIT%" push
 if errorlevel 1 (
   echo.
